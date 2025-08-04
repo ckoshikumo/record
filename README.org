@@ -1,0 +1,14 @@
+*Record* is a simple set of macros to deal with errors.
+
+It's heavily inspired by Zed Shaw's debug macros. Like, *heavily*.
+
+It follows the usual C header library style: in one .c file, do this:
+
+#+begin_src C 
+
+#define RECORD_IMPLEMENTATION
+#include "record.h"
+
+#+end_src
+
+A real readme with examples if forthcoming.
