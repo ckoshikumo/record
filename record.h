@@ -1,15 +1,13 @@
+
 #ifndef INCLUDE_RECORD_H
 #define INCLUDE_RECORD_H
 
-#include <errno.h>
 #include <stdarg.h>
 #include <string.h> // IWYU pragma: keep.
 
 #ifndef REC_API
 #define REC_API
 #endif
-
-#define REC_ERRNO (errno == 0 ? NULL : strerror(errno))
 
 #define REC_ENUM_STR(apply)                                                    \
 	apply(REC_LOG, "Log") apply(REC_INFO, "Info") apply(REC_WARN, "Warn")      \
@@ -27,38 +25,32 @@ typedef enum { REC_ENUM_STR(REC_AS_ENUM) } rec_type_e;
 #define rec_debug(msg, ...)
 #else
 #define rec_debug(msg, ...)                                                    \
-	_rec_write(REC_DEBUG, __FILE__, __LINE__, REC_ERRNO,                       \
-	           msg __VA_OPT__(, ) __VA_ARGS__)
+	_rec_write(REC_DEBUG, __FILE__, __LINE__, msg __VA_OPT__(, ) __VA_ARGS__)
 #endif // NDEBUG
 
 #define rec_error(msg, ...)                                                    \
-	_rec_write(REC_ERROR, __FILE__, __LINE__, REC_ERRNO,                       \
-	           msg __VA_OPT__(, ) __VA_ARGS__)
+	_rec_write(REC_ERROR, __FILE__, __LINE__, msg __VA_OPT__(, ) __VA_ARGS__)
 
 #define rec_warn(msg, ...)                                                     \
-	_rec_write(REC_WARN, __FILE__, __LINE__, REC_ERRNO,                        \
-	           msg __VA_OPT__(, ) __VA_ARGS__)
+	_rec_write(REC_WARN, __FILE__, __LINE__, msg __VA_OPT__(, ) __VA_ARGS__)
 
 #ifndef NRELEASE
 #define rec_info(msg, ...)                                                     \
-	_rec_write(REC_INFO, __FILE__, __LINE__, REC_ERRNO,                        \
-	           msg __VA_OPT__(, ) __VA_ARGS__)
+	_rec_write(REC_INFO, __FILE__, __LINE__, msg __VA_OPT__(, ) __VA_ARGS__)
 #else
 #define rec_info(msg, ...)
 #endif
 
 #ifndef NRELEASE
 #define rec_log(msg, ...)                                                      \
-	_rec_write(REC_LOG, __FILE__, __LINE__, REC_ERRNO,                         \
-	           msg __VA_OPT__(, ) __VA_ARGS__)
+	_rec_write(REC_LOG, __FILE__, __LINE__, msg __VA_OPT__(, ) __VA_ARGS__)
 #else
 #define rec_log(msg, ...)
 #endif
 
 #ifdef NTRACE
 #define rec_trace(msg, ...)                                                    \
-	_rec_write(REC_TRACE, __FILE__, __LINE__, NULL,                            \
-	           msg __VA_OPT__(, ) __VA_ARGS__)
+	_rec_write(REC_TRACE, __FILE__, __LINE__, msg __VA_OPT__(, ) __VA_ARGS__)
 #else
 #define rec_trace(msg, ...)
 #endif
@@ -68,8 +60,8 @@ typedef enum { REC_ENUM_STR(REC_AS_ENUM) } rec_type_e;
 //
 extern const char *record_strs[];
 
-REC_API void _rec_write(rec_type_e type, char *file, int line, char *errnostr,
-                        char const *msg, ...);
+REC_API void _rec_write(rec_type_e type, char *file, int line, char const *msg,
+                        ...);
 
 #endif // INCLUDE_RECORD_H
 
@@ -81,14 +73,10 @@ REC_API void _rec_write(rec_type_e type, char *file, int line, char *errnostr,
 
 const char *record_strs[] = {REC_ENUM_STR(REC_AS_STR)};
 
-REC_API void _rec_write(rec_type_e type, char *file, int line, char *errnostr,
-                        const char *msg, ...) {
+REC_API void _rec_write(rec_type_e type, char *file, int line, const char *msg,
+                        ...) {
 
-	fprintf(stderr, "[%s] (%s:%d", record_strs[type], file, line);
-	if (errnostr) fprintf(stderr, ":errno[%s]", errnostr);
-	errno = 0;
-
-	fprintf(stderr, ") ");
+	fprintf(stderr, "[%s] (%s:%d) ", record_strs[type], file, line);
 
 	va_list(arg);
 	va_start(arg, msg);
