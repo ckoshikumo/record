@@ -9,6 +9,17 @@
 #define REC_API
 #endif
 
+#define REC_ERRNO (errno == 0 ? NULL : strerror(errno))
+
+#define REC_ENUM_STR(apply)                                                    \
+	apply(REC_LOG, "Log") apply(REC_INFO, "Info") apply(REC_WARN, "Warn")      \
+	    apply(REC_ERROR, "Error") apply(REC_FATAL, "Fatal")                    \
+	        apply(REC_TRACE, "Trace") apply(REC_DEBUG, "Debug")
+
+#define REC_AS_ENUM(type, str, ...) type,
+
+typedef enum { REC_ENUM_STR(REC_AS_ENUM) } rec_type_e;
+
 //
 // API
 //
@@ -28,27 +39,33 @@
 	_rec_write(REC_WARN, __FILE__, __LINE__, REC_ERRNO,                        \
 	           msg __VA_OPT__(, ) __VA_ARGS__)
 
+#ifndef NRELEASE
 #define rec_info(msg, ...)                                                     \
 	_rec_write(REC_INFO, __FILE__, __LINE__, REC_ERRNO,                        \
 	           msg __VA_OPT__(, ) __VA_ARGS__)
+#else
+#define rec_info(msg, ...)
+#endif
 
+#ifndef NRELEASE
 #define rec_log(msg, ...)                                                      \
 	_rec_write(REC_LOG, __FILE__, __LINE__, REC_ERRNO,                         \
 	           msg __VA_OPT__(, ) __VA_ARGS__)
+#else
+#define rec_log(msg, ...)
+#endif
+
+#ifdef NTRACE
+#define rec_trace(msg, ...)                                                    \
+	_rec_write(REC_TRACE, __FILE__, __LINE__, NULL,                            \
+	           msg __VA_OPT__(, ) __VA_ARGS__)
+#else
+#define rec_trace(msg, ...)
+#endif
 
 //
 // Helpers and implementation
 //
-#define REC_ERRNO (errno == 0 ? NULL : strerror(errno))
-
-#define REC_ENUM_STR(apply)                                                    \
-	apply(REC_DEBUG, "Debug") apply(REC_ERROR, "Error")                        \
-	    apply(REC_WARN, "Warn") apply(REC_INFO, "Info") apply(REC_LOG, "Log")
-
-#define REC_AS_ENUM(type, str, ...) type,
-
-typedef enum { REC_ENUM_STR(REC_AS_ENUM) } rec_type_e;
-
 extern const char *record_strs[];
 
 REC_API void _rec_write(rec_type_e type, char *file, int line, char *errnostr,
@@ -69,6 +86,7 @@ REC_API void _rec_write(rec_type_e type, char *file, int line, char *errnostr,
 
 	fprintf(stderr, "[%s] (%s:%d", record_strs[type], file, line);
 	if (errnostr) fprintf(stderr, ":errno[%s]", errnostr);
+	errno = 0;
 
 	fprintf(stderr, ") ");
 
